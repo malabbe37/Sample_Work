@@ -1,0 +1,87 @@
+Name: Michael Labbe
+Section: West
+Date: 04/27/23
+Assignment Name: Homework Fourteen
+Goal of Program: Transformations, Differencing, ACF/PACF plots, ARIMA vs. AUTO.ARIMA, Forecasting
+Data Files Used: JnJ.csv
+
+1.
+```{r}
+library(readr)
+library(fpp)
+
+setwd("C:\\Users\\malab\\OneDrive\\Documents\\Notre Dame\\Linear Models\\Data Sets")
+
+jnj <- read_csv("JnJ.csv")
+jnj <- dplyr::select(jnj,date,close)
+
+jnj_ts <- ts(jnj$close)
+plot.ts(jnj_ts)
+```
+From the time series plot, we can see a trend upwards over time for the close variable. 
+
+
+2. Yes, a transformation is required to stabilize the variation.
+```{r}
+#The data shows different variation at different levels of the series, so a transformation is useful.
+box_jnj <- BoxCox(jnj_ts,lambda=BoxCox.lambda(jnj_ts))
+ts.plot(box_jnj)
+```
+
+
+3.
+```{r}
+adf.test(box_jnj) #p-value > 0.01: the time series is NOT stationary
+
+ndiffs(box_jnj) #Check to see if we need regular differencing to obtain stationarity. Answer is YES
+
+adf.test(diff(box_jnj)) #p-value < 0.01: the time series is now stationary
+jnj_ts_diff <- diff(box_jnj)
+ts.plot(jnj_ts_diff)
+```
+
+
+4.
+```{r}
+ggAcf(jnj_ts_diff)
+ggPacf(jnj_ts_diff)
+```
+From the ACF and PACF plots, we can see that the suggested model is either an MA(2) model or an AR(2) model or some combination of both. 
+
+
+5.
+Two plausible models are c(2,1,0) and c(0,1,2) based on the plots in the previous answer. 
+```{r}
+#Try MA(2) model
+fit <- Arima(box_jnj,order = c(0,1,2))
+summary(fit)
+#Try AR(2) model
+fit2 <- Arima(box_jnj,order = c(2,1,0))
+summary(fit2)
+```
+According to the AIC_c criterion the MA(2) model worked better than the AR(2) model. 
+
+
+6.
+```{r}
+fit3 <- auto.arima(box_jnj, stepwise=FALSE)
+summary(fit3) 
+```
+No, the auto.arima function chose a different model than both of the ones fit previously. In this particular example, the auto.arima function finds a model that would otherwise be difficult to find by just analyzing the PACF/ACF plots. 
+
+
+7.
+```{r}
+#Check the residuals
+tsdisplay(fit3$residuals) 
+Box.test(fit3$residuals,lag=15, type='Ljung')
+help(Box.test)
+#p value is > 0.05, so residuals are white noise and the model fit is adequate.
+```
+
+
+8.
+```{r}
+#Plot the forecast
+plot(forecast(fit3,h=10),include=80)
+```

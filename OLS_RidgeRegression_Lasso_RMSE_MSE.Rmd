@@ -1,0 +1,318 @@
+Name: Michael Labbe
+Section: West
+Date: 03/31/23
+Assignment Name: Homework Ten
+Goal of Program: OLS, Ridge Regression, Lasso, RMSE/MSE
+Data Files Used: winequality-red.csv
+
+Part One:
+
+1.
+```{r}
+setwd("C:\\Users\\malab\\OneDrive\\Documents\\Notre Dame\\Linear Models\\Data Sets")
+
+#Read in data
+red_wine <- read.csv("winequality-red.csv",header=T,sep=";")
+attach(red_wine)
+
+##Create RMSE function
+rmse <- function(x,y) sqrt(mean((x-y)^2))
+
+#Specify first column "Quality" as response and all other columns as predictors  
+y <- red_wine[,1]
+X <- as.matrix(red_wine[,-1])
+
+#Set seed for reproducible results
+set.seed(3)
+
+n <- nrow(red_wine)
+
+#Use the sample and setdiff functions to obtain the indices of observations in each group
+train.index <- sample(1:n,round(n/2),replace=F)
+test.index <- setdiff(1:n,train.index)
+#Now, subset the data into the training and validation parts
+X.train <- X[train.index,]; y.train <- y[train.index]
+X.test <- X[test.index,]; y.test <- y[test.index]
+
+#Fit OLS
+mod.red <- lm(y.train~X.train)
+
+#Obtain predicted values from OLS
+ypred.red <- cbind(1,X.test)%*%coef(mod.red)
+
+#Compute RMSE for test data under OLS
+rmse(ypred.red,y.test)
+```
+The RMSE for the test data is 0.6192.
+
+
+2.
+```{r}
+# Fit Ridge Regression model (Ridge: alpha = 0)
+require(glmnet)
+mod.ridge <- cv.glmnet(X.train, y.train, alpha=0)
+mod.ridge
+
+# Results
+plot(mod.ridge)
+mod.ridge$lambda.min
+mod.ridge$lambda.1se
+log(mod.ridge$lambda.min)
+log(mod.ridge$lambda.1se)
+
+#Obtain test predicted values from ridge regression model
+ypred.ridge.min <- cbind(1,X.test)%*%coef(mod.ridge,mod.ridge$lambda.min)
+ypred.ridge.1se <- cbind(1,X.test)%*%coef(mod.ridge,mod.ridge$lambda.1se)
+
+#Compute RMSE for test data under ridge regression
+rmse(ypred.ridge.min,y.test)
+rmse(ypred.ridge.1se,y.test)
+```
+The cv.glmnet() function recommended using a lambda value of 0.1163 for the min and recommended a lambda value of 0.2230 for the 1 standard error to minimize the MSE/RMSE. 
+
+
+3.
+The lambda.min (0.633) applies more shrinkage than the lambda.1se (0.662). 
+
+
+4.
+```{r}
+#Compute RMSE for test data under ridge regression
+rmse(ypred.ridge.min,y.test)
+rmse(ypred.ridge.1se,y.test)
+```
+The RMSE on the test data using lambda.min comes out to be 0.633. Compared with the OLS model, the ridge regression is actually less optimal in this case. Therefore, there is a strong case to use the OLS model over the ridge regression model.
+
+
+5.
+A biased model would be a model that overestimates or underestimates the population parameter. The ridge regression would be more biased compared with the OLS model in this case due to shrinkage. Although it is more biased than the OLS model, the ridge regression model will have less variability than the OLS model.  
+
+
+6.
+Based on the previous questions and other factors, I would use OLS as my model of choice for the data due to the fact that the OLS model better minimizes the RMSE. The model does not even appear to have a lot of multicollinearity going from the get-go based on the initial p-values of our training set.
+
+```{r}
+mu <- rep(1,length(BETAS))
+  Sigma <- matrix(rho.x, nrow=length(BETAS), ncol=length(BETAS)) + diag(length(BETAS))*(1 - rho.x)
+  X <- mvrnorm(n,mu,Sigma)
+  y <- BETA0 + X %*% BETAS + rnorm(n)
+  #Split data
+  X_train <- X[1:(n/2),]; y_train <- y[1:(n/2)]
+  X_test <- X[((n/2) + 1):n,]; y_test <- y[((n/2) + 1):n]
+  
+  #Fit OLS and make predictions in the test set and save RMSE
+  mod_ols <- lm(y_train ~ X_train)
+  yhat_ols <-  cbind(1, X_test) %*% coef(mod_ols)
+  
+  #Fit ridge via GLMnet and make predictions in the test set and save RMSE
+  coef(mod_ridge)
+  mod_ridge <- cv.glmnet(X_train, y_train, alpha = 0, nfolds = 3)
+  yhat_ridge <-  cbind(1, X_test) %*% coef(mod_ridge)
+```
+  
+  
+
+Part Two:
+
+1-2.
+```{r}
+library(MASS)
+library(glmnet)
+
+#Create function to compute RMSE
+rmse <- function(x,y) sqrt(mean((x - y)^2))
+#Set sample sizes and true, or generating model parameters
+n <- 100
+BETA0 <- 3
+#Generate coefficients
+BETAS <- c(0.5,0.5,0.5,0.5,0.5)
+#specify correlation between predictors (use a number between 0 and 1)
+rho.x <- 0.95
+
+#Set number of iterations
+iter <- 200
+
+#Set empty vectors to save RMSE for each method
+OLS_rmse <- integer(iter)
+Ridge_rmse <- integer(iter)
+Lasso_rmse <- integer(iter)
+Ridge_MASS_rmse <- integer(iter)
+
+for (i in 1:iter) {
+  #simulate data
+  mu <- rep(1,length(BETAS))
+  Sigma <- matrix(rho.x, nrow=length(BETAS), ncol=length(BETAS)) + diag(length(BETAS))*(1 - rho.x)
+  X <- mvrnorm(n,mu,Sigma)
+  y <- BETA0 + X %*% BETAS + rnorm(n)
+  #Split data
+  X_train <- X[1:(n/2),]; y_train <- y[1:(n/2)]
+  X_test <- X[((n/2) + 1):n,]; y_test <- y[((n/2) + 1):n]
+  
+  #Fit OLS and make predictions in the test set and save RMSE
+  mod_ols <- lm(y_train ~ X_train)
+  yhat_ols <-  cbind(1, X_test) %*% coef(mod_ols)
+  OLS_rmse[i] <- rmse(yhat_ols, y_test)
+  
+  #Fit ridge via GLMnet and make predictions in the test set and save RMSE
+  mod_ridge <- cv.glmnet(X_train, y_train, alpha = 0, nfolds = 3)
+  yhat_ridge <-  cbind(1, X_test) %*% coef(mod_ridge)
+  Ridge_rmse[i] <- rmse(yhat_ridge, y_test)
+  
+  #Fit lasso via GLMnet and make predictions in the test set and     save RMSE
+  mod_lasso <- cv.glmnet(X_train, y_train, alpha = 1, nfolds = 3)
+  yhat_lasso <-  cbind(1, X_test) %*% coef(mod_lasso)
+  Lasso_rmse[i] <- rmse(yhat_lasso, y_test)
+  
+  #Fit ridge via lm.ridge() in MASS package
+  mod_ridge_mass <- lm.ridge(y_train ~ X_train, lambda = seq(0,100,0.01))
+  yhat_ridge_mass <- cbind(1, X_test) %*%   coef(mod_ridge_mass)[which.min((mod_ridge_mass$GCV)),]
+  Ridge_MASS_rmse[i] <- rmse(yhat_ridge_mass, y_test)
+}
+  
+mean(OLS_rmse)
+mean(Ridge_rmse)
+mean(Lasso_rmse)
+mean(Ridge_MASS_rmse)
+```
+Since the Ridge_MASS_rmse was the best proven model, we will use it in our cross-design experiment in number 3 below:
+
+3.
+```{r}
+library(MASS)
+library(glmnet)
+
+#Create function to compute RMSE
+rmse <- function(x,y) sqrt(mean((x - y)^2))
+#Set sample sizes and true, or generating model parameters
+n <- 100
+BETA0_1 <- 3
+#Generate coefficients
+BETAS1 <- c(0.3,0.3,0.3,0.3,0.3)
+BETAS2 <- c(0.7,0.7,0.7,0.7,0.7)
+BETAS3 <- c(1.0,1.0,1.0,1.0,1.0)
+#specify correlation between predictors (use a number between 0 and 1)
+rho.x_1 <- 0.5
+rho.x_2 <- 1.0
+
+#Set number of iterations
+iter <- 200
+
+#Set empty vector to save RMSE for each
+Ridge_MASS_rmse1 <- integer(iter)
+Ridge_MASS_rmse2 <- integer(iter)
+Ridge_MASS_rmse3 <- integer(iter)
+Ridge_MASS_rmse4 <- integer(iter)
+Ridge_MASS_rmse5 <- integer(iter)
+Ridge_MASS_rmse6 <- integer(iter)
+
+#RMSE simulation 1: BETAS1 & rho.x_1
+for (i in 1:iter) {
+  #simulate data
+  mu <- rep(1,length(BETAS1))
+  Sigma <- matrix(rho.x_1, nrow=length(BETAS1), ncol=length(BETAS1)) + diag(length(BETAS1))*(1 - rho.x_1)
+  X <- mvrnorm(n,mu,Sigma)
+  y <- BETA0 + X %*% BETAS1 + rnorm(n)
+  #Split data
+  X_train <- X[1:(n/2),]; y_train <- y[1:(n/2)]
+  X_test <- X[((n/2) + 1):n,]; y_test <- y[((n/2) + 1):n]
+  
+  #Fit ridge via lm.ridge() in MASS package
+  mod_ridge_mass <- lm.ridge(y_train ~ X_train, lambda = seq(0,100,0.01))
+  yhat_ridge_mass <- cbind(1, X_test) %*%   coef(mod_ridge_mass)[which.min((mod_ridge_mass$GCV)),]
+  Ridge_MASS_rmse1[i] <- rmse(yhat_ridge_mass, y_test)
+}
+
+#RMSE simulation 2: BETAS1 & rho.x_2
+for (i in 1:iter) {
+  #simulate data
+  mu <- rep(1,length(BETAS1))
+  Sigma <- matrix(rho.x_2, nrow=length(BETAS1), ncol=length(BETAS1)) + diag(length(BETAS1))*(1 - rho.x_2)
+  X <- mvrnorm(n,mu,Sigma)
+  y <- BETA0 + X %*% BETAS1 + rnorm(n)
+  #Split data
+  X_train <- X[1:(n/2),]; y_train <- y[1:(n/2)]
+  X_test <- X[((n/2) + 1):n,]; y_test <- y[((n/2) + 1):n]
+  
+  #Fit ridge via lm.ridge() in MASS package
+  mod_ridge_mass <- lm.ridge(y_train ~ X_train, lambda = seq(0,100,0.01))
+  yhat_ridge_mass <- cbind(1, X_test) %*%   coef(mod_ridge_mass)[which.min((mod_ridge_mass$GCV)),]
+  Ridge_MASS_rmse2[i] <- rmse(yhat_ridge_mass, y_test)
+}
+
+#RMSE simulation 3: BETAS2 & rho.x_1
+for (i in 1:iter) {
+  #simulate data
+  mu <- rep(1,length(BETAS2))
+  Sigma <- matrix(rho.x_1, nrow=length(BETAS2), ncol=length(BETAS2)) + diag(length(BETAS2))*(1 - rho.x_1)
+  X <- mvrnorm(n,mu,Sigma)
+  y <- BETA0 + X %*% BETAS2 + rnorm(n)
+  #Split data
+  X_train <- X[1:(n/2),]; y_train <- y[1:(n/2)]
+  X_test <- X[((n/2) + 1):n,]; y_test <- y[((n/2) + 1):n]
+  
+  #Fit ridge via lm.ridge() in MASS package
+  mod_ridge_mass <- lm.ridge(y_train ~ X_train, lambda = seq(0,100,0.01))
+  yhat_ridge_mass <- cbind(1, X_test) %*%   coef(mod_ridge_mass)[which.min((mod_ridge_mass$GCV)),]
+  Ridge_MASS_rmse3[i] <- rmse(yhat_ridge_mass, y_test)
+}
+
+#RMSE simulation 4: BETAS2 & rho.x_2
+for (i in 1:iter) {
+  #simulate data
+  mu <- rep(1,length(BETAS2))
+  Sigma <- matrix(rho.x_2, nrow=length(BETAS2), ncol=length(BETAS2)) + diag(length(BETAS2))*(1 - rho.x_2)
+  X <- mvrnorm(n,mu,Sigma)
+  y <- BETA0 + X %*% BETAS2 + rnorm(n)
+  #Split data
+  X_train <- X[1:(n/2),]; y_train <- y[1:(n/2)]
+  X_test <- X[((n/2) + 1):n,]; y_test <- y[((n/2) + 1):n]
+  
+  #Fit ridge via lm.ridge() in MASS package
+  mod_ridge_mass <- lm.ridge(y_train ~ X_train, lambda = seq(0,100,0.01))
+  yhat_ridge_mass <- cbind(1, X_test) %*%   coef(mod_ridge_mass)[which.min((mod_ridge_mass$GCV)),]
+  Ridge_MASS_rmse4[i] <- rmse(yhat_ridge_mass, y_test)
+}
+
+#RMSE simulation 5: BETAS3 & rho.x_1
+for (i in 1:iter) {
+  #simulate data
+  mu <- rep(1,length(BETAS3))
+  Sigma <- matrix(rho.x_1, nrow=length(BETAS3), ncol=length(BETAS3)) + diag(length(BETAS3))*(1 - rho.x_1)
+  X <- mvrnorm(n,mu,Sigma)
+  y <- BETA0 + X %*% BETAS3 + rnorm(n)
+  #Split data
+  X_train <- X[1:(n/2),]; y_train <- y[1:(n/2)]
+  X_test <- X[((n/2) + 1):n,]; y_test <- y[((n/2) + 1):n]
+  
+  #Fit ridge via lm.ridge() in MASS package
+  mod_ridge_mass <- lm.ridge(y_train ~ X_train, lambda = seq(0,100,0.01))
+  yhat_ridge_mass <- cbind(1, X_test) %*%   coef(mod_ridge_mass)[which.min((mod_ridge_mass$GCV)),]
+  Ridge_MASS_rmse5[i] <- rmse(yhat_ridge_mass, y_test)
+}
+
+#RMSE simulation 6: BETAS3 & rho.x_2
+for (i in 1:iter) {
+  #simulate data
+  mu <- rep(1,length(BETAS3))
+  Sigma <- matrix(rho.x_2, nrow=length(BETAS3), ncol=length(BETAS3)) + diag(length(BETAS3))*(1 - rho.x_2)
+  X <- mvrnorm(n,mu,Sigma)
+  y <- BETA0 + X %*% BETAS3 + rnorm(n)
+  #Split data
+  X_train <- X[1:(n/2),]; y_train <- y[1:(n/2)]
+  X_test <- X[((n/2) + 1):n,]; y_test <- y[((n/2) + 1):n]
+  
+  #Fit ridge via lm.ridge() in MASS package
+  mod_ridge_mass <- lm.ridge(y_train ~ X_train, lambda = seq(0,100,0.01))
+  yhat_ridge_mass <- cbind(1, X_test) %*%   coef(mod_ridge_mass)[which.min((mod_ridge_mass$GCV)),]
+  Ridge_MASS_rmse6[i] <- rmse(yhat_ridge_mass, y_test)
+}
+
+Correlation_0.5 <- c(mean(Ridge_MASS_rmse1),mean(Ridge_MASS_rmse3),mean(Ridge_MASS_rmse5))
+Correlation_1.0 <- c(mean(Ridge_MASS_rmse2),mean(Ridge_MASS_rmse4),mean(Ridge_MASS_rmse6))
+
+df <- data.frame(Correlation_0.5,Correlation_1.0)
+rownames(df) <- c("Coefficients_0.3","Coefficients_0.7","Coefficients_1.0")
+df
+```
+The model with the best RMSE is the model with 1 as the generating coefficients and 1 as the level of correlation between predictors. The answer does indeed change depending on the simulated settings. Overall, it was found that as the value of the generating coefficients went up, the RMSE value went up and then down with 0.3 as the coefficient producing the lowest RMSE. In each simulation, we see the value of the higher correlation produced the lower RMSE value between the two. 
+

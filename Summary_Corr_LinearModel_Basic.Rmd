@@ -1,0 +1,67 @@
+Name: Michael Labbe 
+Date: 01/21/23 
+Assignment: Homework One 
+Goal of Program: Exploratory Data Analysis 
+Data Files Used: faraway
+
+```{r}
+library(tidyverse)
+#Load the data
+install.packages("faraway", repos = "http://cran.us.r-project.org")
+library("faraway")
+data(uswages)
+#Obtain numerical summaries
+summary(uswages)
+#Obtain number of rows
+count(uswages)
+#Obtain number of columns/variables
+ncol(uswages)
+#Look at scatterplot of educ vs wages
+plot(uswages$educ,uswages$wage)
+#Obtain correlation of education and wages
+cor(uswages$educ,uswages$wage)
+```
+
+There are 2000 observations in the uswages data set.
+
+There are 10 variables in the uswages data set.
+
+Yes, the plot suggests an overall linear relationship between the education and wages variables with a couple of outliers.
+
+There exists a weak, positive correlation between education and wages.
+
+```{r}
+#Fit simple linear model
+par(mfrow=c(1,1))
+plot(uswages$wage~uswages$educ)
+mod1 <- lm(uswages$wage~uswages$educ)
+summary(mod1)
+abline(mod1)
+```
+Here, beta hat_0 (intercept) is 109.75 and the beta hat_1 (slope) is 38.01. This means that for x values of 0, we would expect y to be 109.75 on average and for every unit increase in x, we expect y to increase by 38.01 units on average. 
+
+
+```{r}
+#Compute the predicted value of wage for the first individual in the data set
+y_hat <- 109.75 + 38.01 * uswages$educ[1]
+y_hat
+
+#Compute the residual
+residual <- uswages$wage[1]-y_hat
+residual
+
+#Compute mean of all residuals
+residuals <- uswages$wage - (109.75 + 38.01 * uswages$educ)
+mean(residuals)
+```
+The predicted value of wage for the first individual in the data set is 793.93. 
+
+The residual for the predicted value of 793.93 is -22.33. 
+
+The mean of all the residuals is 0.0188. I think this value would vary slightly between different linear models depending on the strength of correlation between two variables. 
+
+Definition of sampling distribution: If we sample many times from the population for a quantitative variable, where the population mean is mu and the population standard deviation is sigma, then the mean of all sample means (x-bars) is population mean mu. 
+
+Applying sampling distribution concept to linear regression: If we sample many times from the population for a quantitative variable, where the population slope is beta_1, then the mean of all sample slopes (beta_1-hats) is population slope beta_1.
+
+

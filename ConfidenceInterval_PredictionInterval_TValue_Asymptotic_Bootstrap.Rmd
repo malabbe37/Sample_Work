@@ -1,0 +1,121 @@
+Name: Michael Labbe
+Section: West
+Date: 02/17/23
+Assignment Name: Homework Five
+Goal of Program: Confidence vs Prediction Intervals, Asymptotic vs Bootstrap, Model Utility Test, Interaction Term
+Data Files Used: SNAIL/HAPPY/SAT from FARAWAY Package
+
+
+```{r}
+library(faraway)
+data(snail)
+attach(snail)
+mod <- lm(water~temp+humid)
+summary(mod)
+```
+
+Part 1:
+
+1.
+```{r}
+#Confidence Interval for water when temp is 30 degrees and humidity is 75%
+confid <- predict(mod,new=data.frame(temp=30,humid=75),interval="confidence")
+print(paste("The numerical value of the interval is (",round(confid[2],2),",",round(confid[3],2),")"))
+```
+We are 95% confident that the true mean water value for all snails when temperature is 30 degrees and humidity is 75% lies in the interval (79.29, 85.96).
+
+2.
+```{r}
+#Prediction Interval for water when temp is 30 degrees and humidity is 75%
+pred <- predict(mod,new=data.frame(temp=30,humid=75),interval="prediction")
+print(paste("The numerical value of the interval is (",round(pred[2],2),",",round(pred[3],2),")"))
+```
+We are 95% confident that the water value for a specific snail with a temperature of 30 degrees and a humidity of 75% lies in the interval (70.61, 94.63).
+
+3.
+```{r}
+#Make variable to hold numeric coefficient value
+temp <- as.numeric(mod$coefficients[2])
+
+#Calculate t-value
+t_value <- qt(0.95,24-3)
+
+#Calculate the confidence interval through asymptotic formula
+asymptotic <- temp + c(-1,1) * t_value * 0.22645
+
+print(paste("The confidence interval for Beta_temp using the asymptotic formula is (",round(asymptotic[1],2),",",round(asymptotic[2],2),")"))
+```
+
+4.
+```{r}
+sample_coef_intercept <- NULL
+sample_coef_x1 <- NULL
+iter <- 1000
+
+for (i in 1:iter) {
+  #Creating a resampled dataset from the sample data
+  sample_d = snail[sample(1:nrow(snail), nrow(snail), replace = TRUE), ]
+  
+  #Running the regression on these data
+  model_bootstrap <- lm(water ~ temp, data = sample_d)
+  
+  #Saving the coefficients
+  sample_coef_intercept <-
+    c(sample_coef_intercept, model_bootstrap$coefficients[1])
+  
+  sample_coef_x1 <-
+    c(sample_coef_x1, model_bootstrap$coefficients[2])
+}
+max <- mean(sample_coef_x1) + 1.645*sd(sample_coef_x1)
+min <- mean(sample_coef_x1) - 1.645*sd(sample_coef_x1)
+
+print(paste("The confidence interval for Beta_temp using the bootstrap method is (",round(min,2),",",round(max,2),")"))
+```
+5.
+I would say that the bootstrap method is actually more trustworthy in this situation because the performance of bootstrap confidence intervals are better than asymptotic confidence intervals in terms of the coverage percentages, although the length of the bootstrap confidence interval is obviously larger here. Additionally, the asymptotic method used above makes use of a model that does not factor in the statistical interactions between temperature and humidity.
+
+Part Two:
+
+1.
+```{r}
+data(happy)
+attach(happy)
+
+#Change column name of "happy" to "y"
+colnames(happy)[1] <- "y"
+
+#Fit full model
+modl <- lm(y~as.factor(love), data=happy)
+summary(modl)
+
+#Model Utility Test / Null Model
+mod.null <- lm(y~1, data=happy)
+anova(mod.null,modl)
+```
+Because the p-value for the F-test comes out to be much smaller than our alpha value of 0.05, we can conclude that there is statistical significance between love and happiness. 
+
+2.
+```{r}
+#Determine number of levels in "love"
+nlevels(as.factor(love))
+```
+There are 3 levels for love. There are 2 slopes included in the model. 
+
+
+3.
+Here, beta_love_1 is taken by default in R as the reference category since it is the first alphabetically among the levels. This determines how we interpret the parameters. The interpretation of the slope for beta_love_2, therefore, is that we can expect 1.9333 more love on average than beta_love_1. 
+
+
+Part Three:
+
+1.
+```{r}
+data(sat)
+attach(sat)
+
+#Create model
+model <- lm(math~takers+expend+takers*expend)
+summary(model)
+```
+
+Based on the p-value of 0.304257 of the interaction term (takers*expend), because this value is greater than our alpha value of 0.05, we can determine that there is no statistical significance and therefore, the term should be removed from our model. 

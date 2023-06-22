@@ -1,0 +1,102 @@
+Name: Michael Labbe
+Section: West
+Date: 02/11/23
+Assignment Name: Homework Four
+Goal of Program: Hypothesis Tests for Parameters
+Data Files Used: SAT from FARAWAY Package
+
+
+```{r}
+library(tidyverse)
+#Load the data
+install.packages("faraway", repos = "http://cran.us.r-project.org")
+library("faraway")
+data(sat)
+#Obtain numerical summaries
+summary(sat)
+```
+
+```{r}
+#fit the model
+mod <- lm(total~expend+ratio+salary+takers, data = sat)
+summary(mod)
+```
+
+
+Problem 1:
+
+```{r}
+#Using other quantities in the summary
+beta_takers <- as.numeric(mod$coefficients[5])
+beta_takers_se <- as.numeric(summary(mod)$coef[5,2])
+
+
+#Calculate the test statistic
+test_stat <- beta_takers / beta_takers_se
+test_stat
+```
+
+```{r}
+#Using degrees of freedom
+dof <- nrow(sat) - mod$rank
+
+#Calculate the p-value
+p_value <- pt(test_stat,dof)+pt(-test_stat,dof,lower=F)
+print(paste("The p_value for the hypothesis test of Beta-Hat = 0 is",p_value))
+```
+Formal definition of the p-value: Assuming H_0 (null hypothesis) is true, there is a ___% chance that we will find the observed sample. If the p-value is smaller than our acceptable alpha value, then we can conclude that the it is unlikely we will attain that value and therefore can reject our null hypothesis. 
+
+Using alpha = 0.05, we can conclude that because our p-value (2.62*10^-16) is much smaller than the alpha value, we have sufficient evidence to reject the null hypothesis. That is to say that the takers parameter does, in fact, have statistical significance in the model. 
+
+
+Problem 2:
+
+```{r}
+#Compute the confidence interval for the beta_takers parameter (99% confidence)
+upper <- beta_takers + (beta_takers_se*qt(0.995,45))
+lower <- beta_takers - (beta_takers_se*qt(0.995,45))
+print(paste("The confidence interval for takers is between",round(lower,4),"and",round(upper,4)))
+```
+It is not appropriate to say "There is a 99% probability Beta_takers lies in the interval". Rather, it more appropriate to say that "we are 99% confident that the true model parameter (Beta_takers) falls within the interval -3.5265 and -2.2825". The reason for this lies in the fundamental difference between probability and confidence interval. In probability, you are not sure about your outcome while in confidence, you are sure about your outcome to a greater extent. In our example above, there is only a 1% chance that the range -3.5265 and -2.2825 excludes the true model parameter value for Beta_takers. 
+
+In problem 1, we used alpha=0.05 or alpha=5% which is consistent with a 95% CI for Beta_takers. The advantage of the confidence interval relative to the corresponding hypothesis test is that we get information about plausible ranges for the parameters. If the interval contains zero, this indicates that the null hypothesis would not be rejected at the 1% level. Because we see above that the zero does not lie in the confidence interval, we can reject the null hypothesis. 
+
+
+Problem 3:
+
+```{r}
+#fit the model
+mod_reduce <- lm(total~takers, data = sat)
+
+#Use anova() function to perform F-test
+anov <- anova(mod_reduce,mod)
+
+print(paste("The test statistic is",round(anov$F[2],4)))
+
+print(paste("The p_value for the test is",round(anov$`Pr(>F)`[2],4)))
+```
+We see that the p_value here for the joint testing of parameters expend, ratio and salary is 0.0316. Using alpha=0.05, we conclude that we have sufficient evidence to reject the null hypothesis (0.0316<0.05). In other words, at least one of the three parameters (expend, ratio and salary) is, in fact, statistically significant. Consequently, the test variables cannot be removed from the model. 
+
+
+Problem 4:
+
+```{r}
+#Model Utility Test / Null Model
+mod_null <- lm(total~1,data=sat)
+
+#Compute the degrees of freedom
+dof_small_omega <- (50-1)
+dof_big_omega <- (50-(4+1))
+
+#Compute the RSS for each omega
+RSS_small_omega <- deviance(mod_null)
+RSS_big_omega <- deviance(mod)
+
+#Compute the t-test (F statistic for joint testing)
+f_stat <- ((RSS_small_omega-RSS_big_omega)/(5-1))/(RSS_big_omega/(50-5))
+print(paste("The F statistic for the hypothesis test is",round(f_stat,2)))
+
+#Compute the p_value for the hypothesis test
+p_val <- 1-pf(f_stat,dof_small_omega-dof_big_omega,dof_big_omega)
+print(paste("The p_value for the hypothesis test of Beta-Hat = 0 is",p_val))
+```

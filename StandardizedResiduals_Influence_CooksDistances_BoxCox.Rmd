@@ -1,0 +1,136 @@
+Name: Michael Labbe
+Section: West
+Date: 03/25/23
+Assignment Name: Homework Nine
+Goal of Program: Standardized Residuals, Influence, Cook's Distances, Box Cox Method, Fitting a Polynomial Model
+Data Files Used: SAT and OZONE from FARAWAY package and CARS from DATASET package
+
+
+Part One:
+
+1.
+```{r}
+library(faraway)
+data(sat)
+attach(sat)
+
+#Fit the model
+mod1 <- lm(total~expend+salary+ratio+takers)
+summary(mod1)
+
+#Calculate Cook's distances
+cooks <- cooks.distance(mod1)
+
+#Find the state with the highest Cook's Distance
+state <- cooks[(cooks==max(cooks))]
+state
+sat[44,]
+```
+Utah is the state with the largest Cook's Distance at 0.4715287.
+
+
+2. 
+```{r}
+n <- dim(model.matrix(mod1))[1]
+p <- dim(model.matrix(mod1))[2]
+num.df <- p
+den.df <- n-p
+F.thresh <- qf(0.5,num.df,den.df)
+F.thresh
+```
+The F-statistic Threshold for detecting influential observations in the model is 0.8834915. Because the cook's distance in our last problem came out to be less than this threshold (0.47 < 0.88), we can confirm that Utah does not have a disproportionately large influence on the regression model. 
+
+
+3.
+```{r}
+#Find the standardized residual
+data.frame(round(rstandard(mod1),4))[44,]
+```
+The value of the standardized residual for Utah is 2.39. Using our rule of thumb (an observation is considered an outlier if abs(r_i) > 3), we can determine that Utah should not be considered an outlier. 
+
+
+4.
+```{r}
+#calculate leverage for Utah in the model
+hat <- as.data.frame(hatvalues(mod1))[44,]
+hat
+```
+The value of leverage for Utah in the model is 0.2921128. 
+
+
+Part Two:
+
+1.
+```{r}
+library(faraway)
+data(ozone)
+attach(ozone)
+
+#Fit the model
+mod2 <- lm(O3~temp+humidity+ibh)
+summary(mod2)
+
+#Fit Diagnostic Plot of Fitted vs. Residual Values
+plot(mod2$fitted.values,mod2$residuals)
+#Zoom out on plot
+plot(mod2$fitted.values,mod2$residuals,ylim=c(-25,25),xlim=c(-10,30))
+```
+The diagnostic plot reveals a cone shape which indicates to us that a model assumption is not upheld - namely, there is non-constant error variance. Therefore, we are looking at an instance of heteroscedasticity.
+
+
+2. 
+```{r}
+#Try Box-Cox to remove heteroscedasticity
+require(MASS)
+bc <- boxcox(mod2, plotit=T)
+lambda <- bc$x[which.max(bc$y)]
+lambda
+```
+The optimal value of lambda chosen by R is 0.2626263. 
+
+
+3.
+Here, 0 is not included in the CI for lambda. This means that we should not apply the logarithmic transformation to the data. However, we know that a transformation is necessary since 1 also does appear in the CI for lambda. Therefore, we should use the expression (x^lambda - 1)/lambda to find our appropriate transformation. 
+
+
+4.
+```{r}
+#Fit the new model using Box-Cox Method transformation recommendation
+mod2_revised <- lm(O3^lambda~temp+humidity+ibh)
+summary(mod2_revised)
+
+#Fit Diagnostic Plot of Fitted vs. Residual Values
+plot(mod2_revised$fitted.values,mod2_revised$residuals)
+#Zoom out on plot
+plot(mod2_revised$fitted.values,mod2_revised$residuals,ylim=c(-.6,.6),xlim=c(1,2.5))
+
+library(lmtest)
+bptest(mod2_revised)
+```
+Here, we see a significant improvement over the original model. Looking at this plot now, we may determine that our assumption is now upheld and we have constant error variance. The BP test comes out to be 0.05614 which means we do not have enough evidence to reject our null hypothesis. Therefore, we assume the null hypothesis is true - that is, the residuals have a constant variance.
+
+
+Part Three:
+
+1.
+```{r}
+setwd("C:\\Users\\malab\\OneDrive\\Documents\\Notre Dame\\Linear Models\\Data Sets")
+getwd()
+#Read in data
+cars <- read.csv("cars.csv",header=T,sep=",")
+attach(cars)
+cars
+
+plot(speed,dist)
+```
+The pattern we see for this data is a strong, positive linear relationship. In other words, as speed gets higher in value, so does distance. 
+
+
+2. 
+```{r}
+#Fit a model with a polynomial term
+car_mod <- lm(dist~speed+I(speed^2))
+summary(car_mod)
+```
+The p value for the quadratic term here is 0.136. According to the p-value approach, the best term to keep in the model would be the original speed predictor (non-quadratic term). We should remove the quadratic term from our model seeing as it is shown to not have statistical significance in our model. 
+

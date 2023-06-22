@@ -1,0 +1,154 @@
+Name: Michael Labbe
+Section: West
+Date: 03/5/23
+Assignment Name: Homework Seven
+Goal of Program: ols, fastbw, stepAIC
+Data Files Used: Baseball2011.txt
+
+```{r}
+library(tidyverse)
+library(dplyr)
+#Read in Baseball2011.txt dataset
+data <- read.table("Baseball2011.txt",header=T)
+data <- na.omit(data)
+attach(data)
+
+BA <- H/AB
+OBP <- (H+BB+HBP)/(AB+BB+HBP+SF)
+X1B <- H-(X2B+X3B+HR)
+SLG <- (X1B+2*X2B+3*X3B+4*HR)/AB
+Win.p <- W/G
+```
+1. 
+```{r}
+#Create full model
+mod <- lm(Win.p~BA+OBP+HR+ERA+FP+SLG)
+
+summary(mod)
+```
+
+The R^2 for this model is 0.9014. This tells us the coefficient of determination 
+which measures the predictive power of the model or, in this case, it tells us 
+that 90.14% of the variation in winning percentage is explained by batting 
+average, base percentage, home runs, earned run average, fielding percentage, 
+and slugging percentage. 
+
+The adjusted R^2 for this model is 0.8756 which takes into account only those 
+variables which have some predictive power. In other words, our adjusted R^2
+takes into account the simplicity vs predictive power tradeoff point. 
+
+
+
+2.
+```{r}
+#Fit above model using ols() function in order to use fastbw() function
+require(rms)
+ols.win <- ols(mod)
+#Perform p-value based selection using fastbw() function
+fastbw(ols.win, rule = "p", sls = 0.05)
+
+#Fit reduced model 
+mod2 <- lm(Win.p~OBP+HR+ERA)
+summary(mod2)
+```
+
+Here, we see the adjusted R^2 utilizing the recommended model parameters from 
+our fastbw function is actually a larger value at 0.8835. This can be explained
+by the fact that when the number of parameters that does not explain our response 
+gets larger, the adjusted R^2 gets smaller. This is because the adjusted R^2 takes
+into account the complexity of the model. In the second model, our parameters are 
+all good, and therefore, our residual mean square is lower resulting in a larger
+adjusted R^2. 
+
+
+3.
+```{r}
+#Perform p-value based selection using fastbw() function
+fastbw(ols.win, rule = "p", sls = 0.75)
+```
+
+This time, utilizing sls = 0.75, we see that we have 4 parameters vice 3 
+when we utilized sls = 0.05. The sls is the significance level for staying in
+the model. If rule = "p", the default is 0.05. As this number gets higher, it 
+allows more and more variables to stay in the model as long as it has a p-value
+that is less than the sls. 
+
+
+4.
+```{r}
+#Use extractAIC function
+extractAIC(mod)
+```
+
+AIC is a balancing act between explanatory power and model complexity. Therefore, 
+the AIC for one model will need another model to compare the measurements to 
+in order to determine the lower AIC and therefore, best balanced model. 
+
+
+5.
+```{r}
+#Use stepAIC() function
+library(MASS)
+aic <- stepAIC(mod)
+aic$anova
+```
+
+Utilizing the first model, we see that the stepAIC function decides on the same 
+optimal variables as the fastbw() function in Question 2. I do not think this 
+will always be the case. Because the stepAIC function works off of the AIC linear 
+regression formula, it will factor in the number of parameters/model complexity. 
+The AIC method is an indicator of relative fit and is not considered a hypothesis
+test like the fastbw() function. 
+
+
+6.
+
+The smaller model fit in Question 5 have predictors with p-values < 0.05 that were
+previously found to have p-values > 0.05 in the larger model in Question 1. This
+can be best explained by multicollinearity. Multicollinearity comes from related/
+redundant variables which inflate the p-values for those variables and increases 
+the sensitivity of the predictors. 
+
+
+7.
+```{r}
+#Fit the null model with only intercept
+mod3 <- lm(Win.p~1)
+
+#Run the stepAIC function in the forward direction
+aic.forward <- stepAIC(mod3,direction="forward",
+                       scope=list(upper=mod,lower=mod3))
+```
+
+The set of predictors recommended by this algorithm is HR+ERA+OBP.
+
+
+8.
+
+Yes, I would say that the person is correct in saying the model with the larger
+number of predictor variables would always have a larger R^2 as long as the larger
+model contains the smaller model's predictors as a subset. This is because as we
+add more and more predictors into our model, the sum of squares is always reduced 
+(even if it's by an insignificant amount) which, in turn, increases the R^2. 
+
+
+9.
+
+In the case of adjusted R^2, I would say that the person is sadly mistaken. 
+This is because, as previously illustrated, the adjusted R^2 can actually increase 
+when we take away predictor variables. This is due to the nature of the adjusted
+R^2 algorithm which factors in the model's complexity and penalizes models 
+proportionate to their complexity. The adjusted R^2 only increases if the 
+predictor enhances the model above what would be obtained by chancel; it also
+decreases when the predictor improves the model less than what is predicted by 
+chance. 
+
+
+10.
+I would say that this person is incorrect, although I understand why they might 
+think so. In the AIC formula, the 2p term will definitely cause the AIC to increase
+as the number of predictors gets bigger and since model 1 in this example has more
+predictors, that it is intuitive to think that model 1 might be larger than model 2. 
+However, because the first term in the AIC formula has to do with model fit and 
+because we don't yet know which model has a better fit, we cannot say with absolute 
+certainty that model 1 will be larger than model 2. 

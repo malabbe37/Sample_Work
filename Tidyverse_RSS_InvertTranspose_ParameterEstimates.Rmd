@@ -1,0 +1,133 @@
+Name: Michael Labbe 
+Date: 01/28/23 
+Assignment: Homework Two 
+Goal of Program: Exploratory Data Analysis 
+Data Files Used: faraway
+
+```{r}
+library(tidyverse)
+#Load the data
+install.packages("faraway", repos = "http://cran.us.r-project.org")
+library("faraway")
+data(uswages)
+#Obtain numerical summaries
+summary(uswages)
+
+#Use lm function for multiple linear regression
+mod <- lm(uswages$wage~uswages$educ+uswages$exper)
+summary(mod)
+
+x <- c(1,2,3)
+y <- c(3,4,7)
+
+mod <- lm(y~x)
+resid(mod)
+
+summary(mod)
+
+x1 <- c(1,2,3,4)
+
+x2 <- c(1.39,2.78,4.17,5.56)
+
+y <- c(1,0,6,8)
+mod <- lm(y~x1+x2)
+summary(mod)
+```
+1. The slope parameter for beta_hat_1 (education) was found to be 
+a value of 51.1753. This means that for every unit increase in our 
+predictor variable x1, we expect our response variable y to increase 
+by ~51.18 units on average. 
+
+2. The predicted wage for an individual with ten (10) years of 
+experience and ten (10) years of education can be found through 
+the use of the regression equation as shown below:
+
+```{r}
+beta_hat_0 <- -242.7994
+beta_hat_1 <- 51.1753
+beta_hat_2 <- 9.7748
+education <- 10
+experience <- 10
+#Compute the fitted/predicted value
+y_bar <- beta_hat_0 + (beta_hat_1 * education) + (beta_hat_2 * experience)
+y_bar
+```
+Here, we see that an individual with 10 years of education and 10 years 
+of experience is predicted to have a wage of ~$366.70. 
+
+
+3. Use the predict() function to obtain the predicted value of wage for the 
+first ten (10) subjects in the uswages data:
+```{r}
+first_10 <- predict(mod, uswages)[1:10]
+first_10
+```
+
+
+4. Compute the residual sum of squares (RSS) for the model.
+```{r}
+RSS <- sum(resid(mod)^2)
+RSS 
+```
+The residual sum of squares for our model came out to be 365,568,644.
+
+
+5. In this model, we obtained the least squares estimate also known as the 
+least squares regression which minimizes the residual sum of squares which
+is the vertical distance between each point to the linear regression line. 
+In doing so, we found the line that best fits our response variable wage using
+our predictor variables education and experience. In other words, there 
+does not exist a line that will have a smaller value of error on average 
+than what was found through the RSS. 
+
+
+6. There is definitely cause for concern in the model used above as the 
+education and experience predictor variables are, in fact, at least moderately
+correlated and certainly have the potential to destabilize our regression model. 
+This phenomenon is known as multicollinearity and can be further evidenced 
+by using the Variance Inflation Factor (VIF) function which measures the 
+correlation and strength of correlation between the independent variables in a 
+regression model.
+
+
+7. H = X(X^TX)^-1*X^T is called the hat matrix and is the orthogonal projection 
+of y onto the space spanned by X. H <- X %*% solve(t(X) %*% X) %*% t(X)
+```{r}
+X <- model.matrix(mod)
+
+#Use the solve function to invert the transpose of x times x term
+H <- X %*% solve(t(X) %*% X) %*% t(X)
+
+ncol(H)
+```
+Beta_hat has three columns.
+
+
+8. Use linear algebra functions in R to obtain the model parameter estimates.
+```{r}
+####Linear Algebra
+n <- nrow(uswages)
+X <- cbind(rep(1, n), uswages$educ, uswages$exper)
+#X'X 
+#t(X) %*% X
+#(X'X)^-1
+#solve(t(X) %*% X)
+#(X'X)^-1*X
+#(solve(t(X) %*% X)) %*% t(X)
+#(X'X)^-1*X*y
+(solve(t(X) %*% X)) %*% t(X) %*% uswages$wage
+```
+
+
+9. The error/residual term captures/accounts for all of the differences between
+the regression line and the actual observed data. These deviations could arise
+from leaving out factors that could further explain the dependent/response 
+variable wage. 
+
+
+10. The error term tells you how certain you can be about the formula. In real 
+life, independent variables are never perfect predictors of the dependent 
+variables. Therefore, a regression line always has an error term. Hence, 
+in this case, the error term is a measure of how accurately the regression 
+model reflects the actual relationship between the independent variable(s) and 
+dependent variable.

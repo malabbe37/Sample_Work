@@ -1,0 +1,52 @@
+Name: Michael Labbe
+Section: West
+Date: 04/15/23
+Assignment Name: Homework Twelve
+Goal of Program: Plotting Time Series Data, Fitting ETS Model, Plotting Forecasts, ACF Plot and Analysis
+Data Files Used: usnetelec from fpp package
+
+1.
+
+```{r}
+library(fpp)
+data("usnetelec")
+
+plot(usnetelec)
+```
+As we can see from the time series plot created, we have a constant positive incline in the annual US net electricity generation over the span of 1949-2003. It is evident that there is no seasonality, but there is a trend upwards. 
+
+
+2.
+```{r}
+#Training data:
+train <- window(usnetelec, end=1993) 
+#Test data:
+test <- window(usnetelec, start=1994)
+```
+
+
+3.
+```{r}
+#ETS Model for train
+fit=ets(train) 
+summary(fit)
+#help(ets)
+```
+The type of model that was fit was "M,A,N". The "M" means the error type was multiplicative, the "A" means the trend type was additive, and the "N" means the season type was none (did not exist). 
+
+
+4.
+```{r}
+#Plot the forecast
+plot(forecast(fit)) 
+lines(fit$mean, col=2, lwd=2) # red
+lines(test, lwd=2) # black
+```
+
+
+5.
+```{r}
+#ACF Plot
+acf(usnetelec)
+```
+As we can see in the ACF plot created, the usnetelec data decays relatively slowly which is indicative of non-stationary data. If it were stationary data, the series would be roughly horizontal. As we can see in a previous plot, this is definitely not the case. Another indicator of stationary data is constant variance, but if we look back at the time series plot, we can see that the variance is different at different points along the series. Therefore, we can conclude that we are dealing with non-stationary data here. 

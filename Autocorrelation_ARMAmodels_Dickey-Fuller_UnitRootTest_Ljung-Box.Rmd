@@ -1,0 +1,38 @@
+Name: Michael Labbe
+Section: West
+Date: 04/20/23
+Assignment Name: Homework Thirteen
+Goal of Program: Autocorrelation, AR/MA Models, ARIMA Modeling, Dickey-Fuller Unit Root Test and Ljung-Box Test.
+Data Files Used: N/A
+
+1.
+
+```{r}
+mean_y_t <- 0.5/(1-0.2)
+mean_y_t
+```
+The mean of y_t is 0.625. 
+
+
+2.
+```{r}
+var <- 4*(1 + 0.5^2)
+var
+
+#Calculate lag=0 autocorrelation
+autocorrelation_0 <- 0.5/(1 + 0.5^2)
+autocorrelation_0
+```
+  a. The mean of y_t is -2. 
+  b. The variance of y_t is 5. 
+  c. The lag=0 autocorrelation of y_t is 0.4.
+  d. The lag-2 autocorrelation of y_t is 0.
+  e. Yes, the time series y_t is stationary.
+
+
+3.
+A unit root test is a statistical test to determine if a time series is stationary, and if not, to determine the required order of differencing to obtain stationarity. In the augmented Dickey-Fuller test, the null hypothesis is that data is non-stationary and non-seasonal. If the null is rejected, then the time series is stationary. 
+
+
+4.
+The Ljung-Box test is useful in determining whether autocorrelations of several lags are zero. In a Ljung-Box Test, the null hypothesis is that all autocorrelations are zero. If the p-value <= 0.05, we have at least one non-zero serial correlation.

@@ -1,0 +1,75 @@
+Name: Michael Labbe
+Section: West
+Date: 02/24/23
+Assignment Name: Homework Six
+Goal of Program: Investigating Multicollinearity, Eigenvalues, VIFs, comparing R^2 values
+Data Files Used: SAVINGS from FARAWAY Package
+
+1.
+```{r}
+library(faraway)
+data(savings)
+help(savings)
+my_data <- savings[,c("pop15","pop75","dpi","ddpi")]
+matrix <- cor(my_data)
+round(matrix,2)
+```
+Yes, we can see that multicollinearity will be present in our model because of the high correlation values between our predictors.
+
+2.
+```{r}
+form <- as.formula(sr~pop15+pop75+dpi+ddpi)
+mod <- lm(form, data=savings)
+summary(mod)
+```
+The proportion of variation in the response that is explained by the predictors is given from the R^2 value of our summary above. The proportion in this case is 0.2797.
+
+3.
+```{r}
+vif(mod)
+
+long_way <- lm(pop75~pop15+dpi+ddpi, data=savings)
+VIF_2 <- 1 / (1-summary(long_way)$r.squared)
+VIF_2
+```
+The value of the largest variation inflation factor (VIF) in the model is that of the percent population over the age of 75. According to the VIF rule-of-thumb threshold (if VIF > 10, then multicollinearity is present), multicollinearity is not present in the model. 
+
+4.
+```{r}
+##Eigenvalues Video
+X <- model.matrix(mod)[,-1]
+e <- eigen(t(X) %*% X)
+round(e$val,2)
+```
+The value of lamda_4 is 35.21. 
+
+5.
+```{r}
+#compute kappa measures of relative sizes
+round(sqrt(e$val[1]/e$val),2)
+```
+
+
+6. According to the rule-of-thumb for eigenvalues as described in the multicollinearity and eigenvalues video, multicollinearity is present in the model. Specifically, because the values 50.77, 493.58, and 1762.61 are all over the value of 30, we can say multicollinearity is present in the model according to the eigenvalues rule-of-thumb. 
+
+
+7. As we can see above, the rule-of-thumb for VIFs does not agree with the rule-of-thumb for eigenvalues.
+
+
+8. Personally, I do believe that multicollinearity is present in the model for reasons previously specified. I believe multicollinearity will be present in the model as indicated by the high correlation values between our predictors.
+
+
+9.
+```{r}
+form2 <- as.formula(sr~pop15+pop75+ddpi)
+
+mod2 <- lm(form2,data=savings)
+summary(mod2)
+```
+The proportion of variance in sr explained by the three predictors in our new model is now 0.2933, a slight increase from our previous model (which included dpi). 
+
+
+10. Although the multiple R^2 in the first model which included dpi as a predictor had a greater multiple R^2 value, it did not have the greater adjusted R^2 value which takes into account the overfitting. For this reason, because the adjusted R^2 is greater in the second model than in the first, we can conclude that the predictor dpi should not be included in the model. 
+
+
+

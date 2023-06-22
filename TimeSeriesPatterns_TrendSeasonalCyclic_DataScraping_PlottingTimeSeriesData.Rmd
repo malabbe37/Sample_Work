@@ -1,0 +1,41 @@
+Name: Michael Labbe
+Section: West
+Date: 04/06/23
+Assignment Name: Homework Eleven
+Goal of Program: Time Series Patterns (Trend, Seasonal, Cyclic), Data Scraping, Plotting Time Series Data
+Data Files Used: Netflix Stock Price via quantmod library
+
+Part One:
+
+1.
+    A. Trend: The heightened variability in the weather over a long period of time (although this is up and down throughout the year, the overall trend is positive, thus indicating an increase in global warming). Another example is the overall decline in the popularity of a baby name in the United States over a long period of time - Joseph, for example, has been on an overall decline in popularity since 1913. 
+    
+    B. Seasonal: The warmest time of the year in South Bend, IN falls between May 15-Sep 15 every year on average. This is seasonal since it comes and goes regularly in the season of summer. Another example that is not so obvious is the sharp escalation in most retail stores which occurs around December every year in response to the Christmas period. 
+    
+    C. Cyclic: Traffic trends go up and down throughout the week, so overall, this is cyclic in nature. Another example is power usage in the home. Some of this can be seasonal, but overall, it is cyclic because it trends up and down throughout the month depending on what activities are going on in the home (recovering from surgery, vacation, hosting parties, etc.).
+
+
+2.
+```{r}
+#Get time series data
+library(quantmod) 
+getSymbols("NFLX",from="2015-01-01", to="2020-12-31")#Data scaping: Download stock prices of Netflix from 2015-01-01 to 2020-12-31
+
+#Perform basic numeric EDA 
+#See the size of the downloaded data
+dim(NFLX) 
+
+#Get mean and standard deviation for Low and Adjusted
+mean(NFLX$NFLX.Low)
+sd(NFLX$NFLX.Low)
+mean(NFLX$NFLX.Adjusted) 
+sd(NFLX$NFLX.Adjusted) 
+
+#Plot time series
+dev.off()
+#Plot the stock price over period
+chartSeries(NFLX,theme="white")
+#Plot the adjusted stock price over period
+chartSeries(NFLX$NFLX.Adjusted,theme="white") 
+```
+The time series pattern that is revealed is the trend pattern as we can see that over the entire length of time from 2015-2020, Netflix stock was on the rise. 

@@ -1,0 +1,84 @@
+Name: Michael Labbe
+Section: West
+Date: 03/15/23
+Assignment Name: Homework Eight
+Goal of Program: Diagnostic Plots, Breusch-Pagan Test, Q-Q Plot, Shapiro-Wilk Test, Durbin-Watson Test
+Data Files Used: Bread and Peace
+
+1.
+```{r}
+setwd("C:\\Users\\malab\\OneDrive\\Documents\\Notre Dame\\Linear Models\\Data Sets")
+getwd()
+#Read in data
+bread_peace <- read.csv("BreadPeace.txt",header=T,sep="")
+attach(bread_peace)
+mod.bp <- lm(vote~growth+killed)
+summary(mod.bp)
+
+#Check assumption of constant error variance
+plot(mod.bp$fitted.values,mod.bp$residuals)
+```
+Here, we see that we get a random pattern consistent with constant error variance which indicates to us the model assumption is upheld! In other words, we have homoscedasticity here.
+
+
+2.
+```{r}
+library(lmtest)
+
+#Check assumption of constant error variance
+bptest(mod.bp)
+```
+
+
+3. 
+Here, we get a larger p-value of 0.5515 which means we do not have enough evidence to reject our null hypothesis. Therefore, we assume the null hypothesis is true - that is, the residuals have
+a constant variance. Therefore, the conclusions reached by the diagnostic plot and the BP Test are the same: the assumptions are upheld. 
+
+
+4.
+The concept of test power relates to testing the assumption of constant variance because formal diagnostic tests may vary in power depending on the type or size of data we're working with. For example, in the case of smaller sample sizes, the formal tests lack power. In this case, the low test power would mean that the formal test (Q-Q Plot for example) would be less likely to reject the null hypothesis. Overall, test power is the compliment of probability of Type II error or (1 - beta) which is probability of rejecting the null when the null is false. 
+
+alpha is probability of rejecting the null when the null is true (Type I)
+beta is probability of failing to reject the null when the null is false (Type II)
+
+Test power is compliment of probability of Type II error or (1 - beta) which is probability of rejecting the null when the null is false. 
+
+5.
+```{r}
+#Check assumption of normal errors
+qqnorm(mod.bp$residuals)
+```
+
+The assumption of the linear model that is being verified here is the assumption that the errors are normally distributed. In other words, we are plotting the theoretical quantiles vs sample quantiles. The y axis represents the sample quantiles of the residuals and the x axis displays the quantiles assuming the data came from a normal distribution. The straighter the line, the better. Curvature indicates assumptions are not upheld. In this example, although the line is curved slightly is some places, the overall shape of the plot linear. Therefore, the assumption looks to be upheld (in my opinion).
+
+
+6.
+```{r}
+#Check assumption of normal errors
+shapiro.test(mod.bp$residuals)
+```
+
+The assumption of the linear model being tested through the Shapiro Test is normality. Here, we see that the p-value comes out to be very large with a value of 0.9076. This means we do not have enough evidence to reject our null hypothesis and therefore, determine that the residuals are normal. Therefore, our assumption that the errors are distributed normally is upheld utilizing the Shapiro Test. 
+
+
+7.
+The test and plot in the previous two questions do, in fact, lead me to the same conclusion. The Q-Q Plot leads me to believe that our assumption is upheld just as the Shapiro Test leads me to believe that our assumption is upheld. 
+
+
+8.
+```{r}
+#Check assumption of independent errors
+n <- dim(bread_peace)[1]
+plot(mod.bp$residuals[1:(n-1)],mod.bp$residuals[2:n])
+require(lmtest)
+dwtest(mod.bp)
+```
+The p-value for the Durbin-Watson Test for independent errors comes out to be 0.7756. The assumption of the linear model being verified is that the errors are independent/uncorrelated. Given the output, this assumption is upheld as we do not have enough evidence to reject our null hypothesis.
+
+
+9.
+In the Shapiro-Wilk and Durbin-Watson tests, the power of the tests go up as the sample size of our data goes up. In other words, the larger the data size we have, the lower the p-value will become through our formal diagnostic tests. The key to understanding this contradiction is the fundamental relationship between size and statistical significance. When testing a hypothesis and holding all other things constant, increasing the sample size will decrease the p-value. This means that increasing the sample size will increase the statistical significance. Therefore, with larger sample sizes, our assumptions are more likely to NOT be upheld for both Shapiro-Wilk and Durbin-Watson (even though they are testing two separate assumptions - normality vs independence).
+
+
+10.
+Given the results of the procedures in the previous items, I would conclude that the assumptions of the linear regression are upheld for this model. 

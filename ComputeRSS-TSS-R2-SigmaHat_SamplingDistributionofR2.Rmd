@@ -1,0 +1,141 @@
+Name: Michael Labbe 
+Date: 02/06/23 
+Assignment: Homework Three
+Goal of Program: Computing RSS, TSS, R^2 and Sigma_Hat; sampling distribution of R^2
+Data Files Used: faraway (chredlin)
+
+Part One:
+
+```{r}
+library(tidyverse)
+#Load the data
+install.packages("faraway", repos = "http://cran.us.r-project.org")
+library("faraway")
+data(chredlin)
+#Obtain numerical summaries
+summary(chredlin)
+```
+
+```{r}
+attach(chredlin)
+lmod <- lm(involact~race+fire+theft+age+log(income), chredlin)
+summary(lmod)
+```
+
+1. What is the value of the RSS for the model? 
+
+```{r}
+#Calculate RSS for our model
+RSS <- sum(resid(lmod)^2)
+print(paste("The residual square sum for lmod is", round(RSS, 2)))
+```
+
+
+2. What is the value of the Total SS for the model? 
+
+```{r}
+#Compute Total SS (sum of squared deviations)
+y_bar <- mean(chredlin$involact)
+dev <- chredlin$involact-y_bar
+TSS <- sum(dev^2)
+
+print(paste("The total sum of squares for lmod is",round(TSS, 2)))
+```
+
+
+3. What is the R^2 value for the model? 
+
+```{r}
+#Using answers from previous two questions
+R_squared <- 1 - (RSS / TSS)
+print(paste("The value for R^2 is",round(R_squared, 4)))
+```
+
+
+4. Explain how to interpret R^2. 
+
+Textbook definition: "R^2, the so-called coefficient of determination or percentage of variance explained: R^2 = 1 − ∑(yˆi −yi)^2  / ∑(yi −y¯)^2 = (1− RSS) / Total SS(Corrected for Mean).  Its range is 0 ≤ R^2 ≤ 1 — values closer to 1 indicating better fits. For simple linear regression R^2 = r^2 where r is the correlation between x and y." (Linear Models with R, Chapman & Hall/CRC Texts in Statistical Science, pg. 23).
+
+Intuitively, it is the measure of how well the model fits the data. In simple terms, it is the percentage of the response variable variation that is explained by a linear model. 
+
+
+5. 
+
+```{r}
+#Calculate the value of sigma_hat for the model
+sigma_hat <- sqrt(RSS/(nrow(chredlin)-length(lmod$coefficients)))
+print(paste("The value for sigma hat is",round(sigma_hat, 4)))
+```
+This sigma hat value, 0.3345, tells us the residual standard error or the typical deviation of a point from the regression line fitted by the model. 
+
+
+6. 
+
+```{r}
+involact_predicted_95 <- 1.96*sigma_hat
+print(paste("Approximately 95% of the zip codes have predicted values for involact within",round(involact_predicted_95, 4),"of the actual value."))
+```
+
+
+7. 
+
+```{r}
+#Use fitted.values attribute to access the fitted value for zip code 60610
+fitted <- lmod$fitted.values["60610"]
+print(paste("The fitted value for zip code 60610 is", round(fitted, 4)))
+
+#Compute the fitted/predicted value for zip code 60610
+y_bar <- lmod$coefficients[1] + (lmod$coefficients[2] * race[6]) + (lmod$coefficients[3] * fire[6])  + (lmod$coefficients[4] * theft[6]) + (lmod$coefficients[5] * age[6]) + (lmod$coefficients[6] * log(income[6]))
+print(paste("Using the regression equation, the fitted value for zip code 60610 is", round(y_bar, 4)))
+```
+
+
+8. Compute the residual for zip code 60610. You may use the residuals attribute of the lm object in R as seen previously, but you should also understand how you would obtain the value by using the regression equation. Round your answer to two decimal places.
+
+```{r}
+#Use residuals attribute to access the residual for zip code 60610
+residual <- lmod$residuals["60610"]
+print(paste("The residual for zip code 60610 is", round(residual, 4)))
+
+#Compute the residual value for zip code 60610
+y_actual <- chredlin$involact[6]
+residual2 <- y_actual - y_bar
+print(paste("Using the regression equation, the residual for zip code 60610 is", round(residual2, 4)))
+```
+
+
+Part Two:
+
+Refer to the simulation code from the Week Three Live Session. Modify it so that it produces a plot of the sampling distribution of R^2, rather than for Beta_hat_1. Display your plot. Does R^2 appear to have a symmetric sampling distribution?
+
+```{r}
+#Define the intercept and slope
+BETA0 <- 0.5
+BETA1 <- 0.75  
+#sample size of 40
+n <- 40  #spread decreases as sample size goes up
+iters <- 1000 
+
+#Create an empty tibble to hold R^2 values
+r_sq <- tibble()
+
+for (i in 1:iters) {
+  x <- rnorm(n,100,15)
+  y <- BETA0 + BETA1*x + rnorm(n,0,10)
+  mod <- lm(y~x)
+  # sum of squared residuals
+  rss <- sum(mod$residuals^2)
+  # mean of total
+  y_bar <- mean(y)
+  # deviation between actual and mean
+  dev <- y-y_bar
+  # sum of squared deviations
+  tss <- sum(dev^2)
+  r <- 1-(rss/tss)
+  r_sq[i,1] <- r
+}
+
+hist(r_sq$...1)
+```
+The R^2 sampling distribution displayed above does not appear to have a symmetric sampling distribution. As we can see, there is a longer tail on the left side of the distribution indicating a left skewed distribution. 
+
